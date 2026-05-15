@@ -1,17 +1,28 @@
 # Soccer Planner Next.js App
- - Soccer planner app: manage groups and matches (users create groups, group managers create matches in the groups, group members view matches and join matches)
- 
- 
- # Technologies: 
- Next.js + Neon DB + Drizzle ORM + React + Tailwind
- 
-# Architectural Guidelines
- - **Service layer**: implement app business logic, used by the RESTful API and Server Actions
- - Use **modular design**: split the app into self-contained components, to avoid long complex files with too much code
- - **Auth**: JWT + bcrypt
- - **Database**: Neon DB + Drizzle ORM
 
+Soccer planner app for managing groups and matches.
 
- # User Interface Guidelines
-  - Implement modern UI, responsive design, use server-rendered components in Next.js
-  - Use server-side rendering, only use client components for browser interaction and forms
+## Technologies
+
+- Next.js
+- Neon DB
+- Drizzle ORM
+- React
+- Tailwind CSS
+
+## Architectural Guidelines
+
+- Implement a service layer for business logic
+- Use the service layer from REST APIs and Server Actions
+- Use modular design
+- Split the app into self-contained components
+- Use JWT authentication
+- Use bcrypt for password hashing
+- Use Neon DB with Drizzle ORM
+
+## User Interface Guidelines
+
+- Implement modern responsive UI
+- Prefer server-rendered components
+- Use SSR where possible
+- Use client components only for forms and browser interactions
