@@ -1,4 +1,8 @@
-export function Footer() {
+import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
+
+export async function Footer() {
+  const user = await getCurrentUser();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -19,20 +23,27 @@ export function Footer() {
             <h3 className="text-white font-semibold mb-2">Quick Links</h3>
             <ul className="text-sm space-y-1">
               <li>
-                <a href="/" className="hover:text-white transition">
+                <Link href="/" className="hover:text-white transition">
                   Home
-                </a>
+                </Link>
               </li>
-              <li>
-                <a href="/login" className="hover:text-white transition">
-                  Login
-                </a>
-              </li>
-              <li>
-                <a href="/register" className="hover:text-white transition">
-                  Register
-                </a>
-              </li>
+              {!user && (
+                <>
+                  <li>
+                    <Link href="/login" className="hover:text-white transition">
+                      Login
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/register"
+                      className="hover:text-white transition"
+                    >
+                      Register
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 

@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100 px-4 py-12">
       <div className="max-w-2xl text-center">
@@ -51,21 +54,22 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Call to Action */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/auth/login"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition text-center"
-          >
-            Login
-          </Link>
-          <Link
-            href="/auth/register"
-            className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold border-2 border-blue-600 hover:bg-blue-50 transition text-center"
-          >
-            Create Account
-          </Link>
-        </div>
+        {!user && (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/login"
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition text-center"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold border-2 border-blue-600 hover:bg-blue-50 transition text-center"
+            >
+              Create Account
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
