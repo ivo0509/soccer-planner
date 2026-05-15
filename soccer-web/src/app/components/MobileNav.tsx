@@ -15,13 +15,13 @@ export function MobileNav({ user }: MobileNavProps) {
   return (
     <>
       <button
-        className="md:hidden p-2"
+        className="md:hidden p-1.5 sm:p-2"
         onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
         aria-label="Toggle menu"
         aria-expanded={isMenuOpen}
       >
         <svg
-          className="w-6 h-6"
+          className="w-5 sm:w-6 h-5 sm:h-6"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -45,10 +45,10 @@ export function MobileNav({ user }: MobileNavProps) {
       </button>
 
       {isMenuOpen && (
-        <div className="md:hidden pb-4 space-y-2">
+        <div className="md:hidden absolute top-14 sm:top-16 left-0 right-0 bg-blue-600 pb-4 space-y-2 px-4">
           <Link
             href="/"
-            className="block px-3 py-2 rounded hover:bg-blue-500 transition"
+            className="block px-2 py-2 rounded hover:bg-blue-500 transition text-sm sm:text-base"
             onClick={() => setIsMenuOpen(false)}
           >
             Home
@@ -56,13 +56,20 @@ export function MobileNav({ user }: MobileNavProps) {
 
           {user ? (
             <>
-              <div className="px-3 py-2 text-sm text-blue-100">
+              <Link
+                href="/dashboard"
+                className="block px-2 py-2 rounded hover:bg-blue-500 transition text-sm sm:text-base"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <div className="px-2 py-2 text-xs sm:text-sm text-blue-100 break-words">
                 Signed in as <span className="font-semibold">{user.name}</span>
               </div>
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="block w-full text-left px-3 py-2 bg-white text-blue-600 rounded hover:bg-blue-50 transition font-semibold"
+                  className="block w-full text-left px-2 py-2 bg-white text-blue-600 rounded hover:bg-blue-50 transition font-semibold text-sm sm:text-base"
                 >
                   Logout
                 </button>
@@ -72,14 +79,14 @@ export function MobileNav({ user }: MobileNavProps) {
             <>
               <Link
                 href="/login"
-                className="block px-3 py-2 rounded hover:bg-blue-500 transition"
+                className="block px-2 py-2 rounded hover:bg-blue-500 transition text-sm sm:text-base"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Login
               </Link>
               <Link
                 href="/register"
-                className="block px-3 py-2 bg-white text-blue-600 rounded hover:bg-blue-50 transition font-semibold"
+                className="block px-2 py-2 bg-white text-blue-600 rounded hover:bg-blue-50 transition font-semibold text-sm sm:text-base"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Register

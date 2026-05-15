@@ -22,7 +22,7 @@ export async function loginAction(
   }
 
   await setSessionCookie(result.user);
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function registerAction(
@@ -47,7 +47,7 @@ export async function registerAction(
   }
 
   await setSessionCookie(result.user);
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function logoutAction() {
