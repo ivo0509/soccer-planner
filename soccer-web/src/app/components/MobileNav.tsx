@@ -63,6 +63,13 @@ export function MobileNav({ user }: MobileNavProps) {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/groups"
+                className="block px-2 py-2 rounded hover:bg-blue-500 transition text-sm sm:text-base"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Groups
+              </Link>
               <div className="px-2 py-2 text-xs sm:text-sm text-blue-100 break-words">
                 Signed in as <span className="font-semibold">{user.name}</span>
               </div>

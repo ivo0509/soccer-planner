@@ -1,6 +1,6 @@
 import { eq, and, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { matches, matchJoins, groups, users, groupMembers } from "@/db/schema";
+import { matches, matchJoins, groups, users, groupMembers, matchComments } from "@/db/schema";
 import {
   getMatchState,
   isMatchActive,
@@ -31,6 +31,13 @@ export interface MatchWithDetails {
     name: string;
     email: string;
     extraSlots: number;
+  }>;
+  comments: Array<{
+    id: number;
+    userId: number;
+    userName: string;
+    text: string;
+    createdAt: Date;
   }>;
   commentCount: number;
 }
@@ -81,11 +88,25 @@ export async function getUserMatches(userId: number) {
       .where(eq(matchJoins.matchId, match.id));
 
     const playerCount = joinedPlayers.reduce(
-      (sum, p) => sum + 1 + (p.extraSlots || 0),
+      (sum, p) => sum + 1 + (p.extraSlots ?? 0),
       0
     );
     const capacityStatus = getCapacityStatus(playerCount, match.capacity);
     const isJoined = joinedPlayers.some((p) => p.id === userId);
+
+    // Get comments for this match
+    const comments = await db
+      .select({
+        id: matchComments.id,
+        userId: matchComments.userId,
+        userName: users.name,
+        text: matchComments.text,
+        createdAt: matchComments.createdAt,
+      })
+      .from(matchComments)
+      .innerJoin(users, eq(matchComments.userId, users.id))
+      .where(eq(matchComments.matchId, match.id))
+      .orderBy(matchComments.createdAt);
 
     enrichedMatches.push({
       id: match.id,
@@ -104,7 +125,8 @@ export async function getUserMatches(userId: number) {
       playerCount,
       capacityStatus,
       players: joinedPlayers,
-      commentCount: 0,
+      comments,
+      commentCount: comments.length,
     });
   }
 
@@ -169,13 +191,27 @@ export async function getMatchById(
     .where(eq(matchJoins.matchId, match.id));
 
   const playerCount = joinedPlayers.reduce(
-    (sum, p) => sum + 1 + (p.extraSlots || 0),
+    (sum, p) => sum + 1 + (p.extraSlots ?? 0),
     0
   );
   const capacityStatus = getCapacityStatus(playerCount, match.capacity);
   const isJoined = viewingUserId != null
     ? joinedPlayers.some((p) => p.id === viewingUserId)
     : false;
+
+  // Get comments for this match
+  const comments = await db
+    .select({
+      id: matchComments.id,
+      userId: matchComments.userId,
+      userName: users.name,
+      text: matchComments.text,
+      createdAt: matchComments.createdAt,
+    })
+    .from(matchComments)
+    .innerJoin(users, eq(matchComments.userId, users.id))
+    .where(eq(matchComments.matchId, match.id))
+    .orderBy(matchComments.createdAt);
 
   return {
     id: match.id,
@@ -194,7 +230,8 @@ export async function getMatchById(
     playerCount,
     capacityStatus,
     players: joinedPlayers,
-    commentCount: 0,
+    comments,
+    commentCount: comments.length,
   };
 }
 
@@ -219,5 +256,35 @@ export async function joinMatch(matchId: number, userId: number) {
 export async function unjoinMatch(matchId: number, userId: number) {
   await db
     .delete(matchJoins)
+    .where(and(eq(matchJoins.matchId, matchId), eq(matchJoins.userId, userId)));
+}
+
+/**
+ * Check if a user is a member of a group.
+ */
+export async function isUserGroupMember(groupId: number, userId: number): Promise<boolean> {
+  const [member] = await db
+    .select({ id: groupMembers.id })
+    .from(groupMembers)
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+    .limit(1);
+
+  return !!member;
+}
+
+/**
+ * Update the extra slots for a user in a match (0-2 slots).
+ */
+export async function updateExtraSlots(
+  matchId: number,
+  userId: number,
+  extraSlots: number
+) {
+  // Clamp extraSlots to 0-2 range
+  const clampedSlots = Math.max(0, Math.min(2, extraSlots));
+
+  await db
+    .update(matchJoins)
+    .set({ extraSlots: clampedSlots })
     .where(and(eq(matchJoins.matchId, matchId), eq(matchJoins.userId, userId)));
 }

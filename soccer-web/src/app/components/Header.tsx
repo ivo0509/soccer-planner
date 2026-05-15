@@ -23,6 +23,9 @@ export async function Header() {
                 <Link href="/dashboard" className="hover:text-blue-100 transition text-sm sm:text-base">
                   Dashboard
                 </Link>
+                <Link href="/groups" className="hover:text-blue-100 transition text-sm sm:text-base">
+                  Groups
+                </Link>
                 <span className="text-xs sm:text-sm text-blue-100">
                   Signed in as <span className="font-semibold">{user.name}</span>
                 </span>

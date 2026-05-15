@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getMatchById } from "@/services/match-service";
+import { getMatchById, isUserGroupMember } from "@/services/match-service";
 import { getCapacityLabel } from "@/lib/match-utils";
 import { joinMatchAction, unjoinMatchAction } from "../actions";
+import { ShareMatchButton } from "@/app/components/ShareMatchButton";
+import { ExtraSlotsEditor } from "@/app/components/ExtraSlotsEditor";
 
 const STATE_LABELS: Record<string, string> = {
   upcoming: "Upcoming",
@@ -46,6 +48,45 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
   if (!match) {
     notFound();
+  }
+
+  // Check if user is a member of the group that owns this match
+  const isMember = await isUserGroupMember(match.groupId, user.id);
+
+  if (!isMember) {
+    // User is not a member of the group, show error
+    return (
+      <div className="flex-1 bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6 sm:px-6 lg:px-8">
+            <Link
+              href="/dashboard"
+              className="text-blue-600 hover:text-blue-700 font-medium mb-3 inline-block text-sm sm:text-base"
+            >
+              ← Back to Dashboard
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Match Details</h1>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8 sm:px-6 lg:px-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8">
+            <h2 className="text-lg sm:text-xl font-bold text-red-800 mb-2">Access Denied</h2>
+            <p className="text-sm sm:text-base text-red-700 mb-4">
+              You are not a member of the group that owns this match. Only group members can view match details.
+            </p>
+            <Link
+              href="/dashboard"
+              className="inline-block px-4 sm:px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold text-sm sm:text-base"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const capacityLabel = getCapacityLabel(match.capacityStatus);
@@ -151,29 +192,42 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
           {/* Join / Unjoin */}
           {match.isActive && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              {match.isJoined ? (
-                <form action={unjoinMatchAction.bind(null, match.id)}>
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-4 sm:px-6 py-2 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 transition text-sm sm:text-base"
-                  >
-                    Unjoin Match
-                  </button>
-                </form>
-              ) : (
-                <form action={joinMatchAction.bind(null, match.id)}>
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-4 sm:px-6 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 transition text-sm sm:text-base"
-                  >
-                    Join Match
-                  </button>
-                </form>
-              )}
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                {match.isJoined ? (
+                  <form action={unjoinMatchAction.bind(null, match.id)}>
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-4 sm:px-6 py-2 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 transition text-sm sm:text-base"
+                    >
+                      Leave Match
+                    </button>
+                  </form>
+                ) : (
+                  <form action={joinMatchAction.bind(null, match.id)}>
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-4 sm:px-6 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 transition text-sm sm:text-base"
+                    >
+                      Join Match
+                    </button>
+                  </form>
+                )}
+                <ShareMatchButton matchId={match.id} />
+              </div>
               <p className="text-xs sm:text-sm text-gray-600">
                 {match.isJoined ? "You are in this match." : "You have not joined yet."}
               </p>
+            </div>
+          )}
+
+          {/* Extra Slots Editor - Only show when user is joined */}
+          {match.isActive && match.isJoined && (
+            <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
+              <ExtraSlotsEditor
+                matchId={match.id}
+                currentSlots={match.players.find((p) => p.id === user.id)?.extraSlots ?? 0}
+              />
             </div>
           )}
         </div>
@@ -208,12 +262,45 @@ export default async function MatchPage({ params }: MatchPageProps) {
           )}
         </section>
 
-        {/* Comments Section (Placeholder) */}
+        {/* Comments Section */}
         <section className="bg-white rounded-lg shadow-md p-6 sm:p-8">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Comments</h3>
-          <p className="text-sm sm:text-base text-gray-600">
-            Comments feature coming soon. Check back later!
-          </p>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
+            Comments ({match.commentCount})
+          </h3>
+
+          {match.comments.length === 0 ? (
+            <p className="text-sm sm:text-base text-gray-600">
+              No comments yet. Be the first to comment!
+            </p>
+          ) : (
+            <div className="space-y-3 sm:space-y-4">
+              {match.comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="border-l-4 border-blue-400 bg-gray-50 p-3 sm:p-4 rounded"
+                >
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">
+                      {comment.userName}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500 flex-shrink-0">
+                      {comment.createdAt.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}{" "}
+                      {comment.createdAt.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-700 break-words">
+                    {comment.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
